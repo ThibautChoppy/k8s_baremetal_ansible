@@ -1,0 +1,10 @@
+---
+
+  dependencies: ['ufw', 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg', 'gnupg2', 'software-properties-common', "python3-pip", 'python3-setuptools', 'virtualenv', 'containerd']
+  package: ['kubelet', 'kubeadm', 'kubectl']
+  pip3: []
+
+  addr: 146.59.235.71
+  cidr: 192.168.0.0/16 #10.244.0.0/16
+
+  tokenFile: token

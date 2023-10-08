@@ -1,0 +1,96 @@
+---
+
+- hosts: all
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Including vars
+    include_vars:
+      file: variables.yml
+      name: params
+
+  - name: Add full path in profile
+    lineinfile:
+      path: /etc/environment
+      line: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+      create: yes
+
+  - name: Install the dependencies
+    apt:
+      name: "{{ params.dependencies }}"
+      state: present
+    when: params.dependencies is defined and params.dependencies | length > 0
+
+  - block:
+    - name: Open needed ports
+      community.general.ufw:
+        rule: allow
+        port: '179'
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: '2379'
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: '4789'
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: '4789'
+        proto: udp
+    - community.general.ufw:
+        rule: allow
+        name: OpenSSH
+
+  - block:
+    - name: Install kubernetes repository
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+    - apt_key:
+        url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
+        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    - apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
+        state: present
+        filename: kubernetes.list
+
+  - name: Upgrade packages manager
+    apt:
+      name: '*'
+      state: latest
+      update_cache: yes
+
+  - name: Install packages
+    apt:
+      name: "{{ params.package }}"
+      state: present
+    when: params.package is defined and params.package | length > 0
+
+  - block:
+    - name: Permanantly disabling SWAP
+      shell: |
+        swapoff -a
+    - replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+  - block:
+    - name: Configuring containerd
+      shell: |
+        containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
+    - lineinfile:
+        path: /etc/containerd/config.toml
+        search_string: 'systemd_cgroup = false'
+        line: '    systemd_cgroup = true'
+
+  - block:
+    - name: Restarting containerd
+      systemd:
+        name: containerd
+        state: started
+        enabled: yes
