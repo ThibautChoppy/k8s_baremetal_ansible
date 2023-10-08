@@ -1,4 +1,4 @@
-# Ansible Playbook DevOps Infrastructure `[v1.1 - Stable]`
+# Ansible Playbook DevOps Infrastructure `[v1.2 - Stable]`
 
 This Ansible Playbook deploys a kubernetes cluster
 
@@ -16,10 +16,10 @@ Dev Env :
 ```
 
 ```
-apt install ansible
+python3 -m pip install --user ansible
 ```
 
-Ansible work by SSH, so it's mandatory to have an ssh key.
+Ansible work by SSH, so it's mandatory to have an ssh key configured and added in authorized_keys file of target hosts.
 
 ### Installing
 
@@ -42,6 +42,9 @@ cluster_nodes: ['xxx.xxx.xxx.xxx k8s-master', 'xxx.xxx.xxx.xxx k8s-node-1']
 Finally, transfer your user's ssh key to all servers :
 ```
 cat ~/.ssh/id_rsa.pub | ssh user@remote_host "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
+ssh user@remote_host
+su
+cp -r .ssh /root/.ssh
 ```
 
 ## Running the tests
@@ -74,31 +77,30 @@ ansible-playbook -u root main.yml
 ### Here are some examples of my environment to guide you :
 ```
 root@master:~# kubectl get nodes
-NAME             STATUS   ROLES    AGE   VERSION
-master           Ready    master   3d    v1.28.2
-node-1           Ready    <none>   3d    v1.28.2
+NAME         STATUS   ROLES           AGE     VERSION
+k8s-master   Ready    control-plane   7m      v1.28.2
+k8s-node-1   Ready    <none>          7m      v1.28.2
 ```
-Here we can see all the nodes currently connected.
+We can see that all nodes are currently connected.
 
 ```
 root@master:~# kubectl get pods -A
-jenkins       jenkins-deployment-667fb997fb-ncdwb   1/1     Running   0          48m
-kube-system   coredns-f9fd979d6-swhkp               1/1     Running   0          48m
-kube-system   coredns-f9fd979d6-wcnn8               1/1     Running   0          48m
-kube-system   etcd-master                           1/1     Running   0          48m
-kube-system   kube-apiserver-master                 1/1     Running   0          48m
-kube-system   kube-controller-manager-master        1/1     Running   0          48m
-kube-system   kube-flannel-ds-lnt9d                 1/1     Running   0          48m
-kube-system   kube-flannel-ds-phbkd                 1/1     Running   0          48m
-kube-system   kube-flannel-ds-v88hw                 1/1     Running   1          48m
-kube-system   kube-proxy-pspws                      1/1     Running   0          48m
-kube-system   kube-proxy-rnbkk                      1/1     Running   0          48m
-kube-system   kube-proxy-w7jj6                      1/1     Running   0          48m
-kube-system   kube-scheduler-master                 1/1     Running   0          48m
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system   calico-kube-controllers-7ddc4f45bc-wxvjt   1/1     Running   0          7m
+kube-system   calico-node-mjt2w                          1/1     Running   0          7m
+kube-system   calico-node-mktfz                          1/1     Running   0          7m
+kube-system   coredns-5dd5756b68-bhqpb                   1/1     Running   0          7m
+kube-system   coredns-5dd5756b68-g2jnr                   1/1     Running   0          7m
+kube-system   etcd-k8s-master                            1/1     Running   0          8m
+kube-system   kube-apiserver-k8s-master                  1/1     Running   0          8m
+kube-system   kube-controller-manager-k8s-master         1/1     Running   0          8m
+kube-system   kube-proxy-h4qdh                           1/1     Running   0          7m
+kube-system   kube-proxy-szcpz                           1/1     Running   0          7m
+kube-system   kube-scheduler-k8s-master                  1/1     Running   0          8m
 ```
-The `-A` option is for "--all-namespaces", we can currently see jenkins running.
+The `-A` option is for "--all-namespaces".
 
-```
+<!-- ```
 root@Master:~# kubectl describe pod/jenkins-deployment-667fb997fb-ncdwb --namespace jenkins
 Name:         jenkins-deployment-667fb997fb-ncdwb
 Namespace:    jenkins
@@ -126,7 +128,7 @@ kube-system   kube-dns     ClusterIP   10.96.0.10       <none>        53/UDP,53/
 ```
 And finally, the list of all services and their open ports.
 
-With all this information, I can deduce that jenkin is accessible with a browser on IP `192.168.1.20:30000`.
+With all this information, I can deduce that jenkin is accessible with a browser on IP `192.168.1.20:30000`. -->
 
 ## Built With
 
