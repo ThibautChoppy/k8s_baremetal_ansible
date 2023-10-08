@@ -4,7 +4,7 @@ This Ansible Playbook deploys a kubernetes cluster
 
 ### Prerequisites
 
-To run this project, you must install Ansible on your computer and have at least 2 GNU/Debian 10.4 servers running.
+To run this project, you must install Ansible on your computer and have at least 2 GNU/Debian 12.2.0 servers running.
 #### Warning: Kubernetes needs at least 2 cores and 2 GB of RAM to run.
 
 Dev Env :
@@ -32,12 +32,16 @@ master ansible_host=xxx.xxx.xxx.xxx
 
 [Nodes]
 node-1 ansible_host=xxx.xxx.xxx.xxx
-node-2 ansible_host=xxx.xxx.xxx.xxx
 ```
 
-Then transfer your user's ssh key to all servers :
+Then, you need to edit the `cluster/variables.yml` file with the IPs and hostname of your servers.
 ```
-cat ~/.ssh/id_rsa.pub | ssh username@remote_host "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
+cluster_nodes: ['xxx.xxx.xxx.xxx k8s-master', 'xxx.xxx.xxx.xxx k8s-node-1']
+```
+
+Finally, transfer your user's ssh key to all servers :
+```
+cat ~/.ssh/id_rsa.pub | ssh user@remote_host "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
 
 ## Running the tests
@@ -50,10 +54,6 @@ master | SUCCESS => {
     "ping": "pong"
 }
 node-1 | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
-node-2 | SUCCESS => {
     "changed": false,
     "ping": "pong"
 }
@@ -75,9 +75,8 @@ ansible-playbook -u root main.yml
 ```
 root@master:~# kubectl get nodes
 NAME             STATUS   ROLES    AGE   VERSION
-master           Ready    master   3d    v1.19.2
-node-1           Ready    <none>   3d    v1.19.2
-node-2           Ready    <none>   3d    v1.19.2
+master           Ready    master   3d    v1.28.2
+node-1           Ready    <none>   3d    v1.28.2
 ```
 Here we can see all the nodes currently connected.
 

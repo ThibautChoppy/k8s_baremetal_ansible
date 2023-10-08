@@ -1,10 +1,8 @@
 ---
-
-  dependencies: ['ufw', 'apt-transport-https', 'ca-certificates', 'curl', 'gnupg', 'gnupg2', 'software-properties-common', "python3-pip", 'python3-setuptools', 'virtualenv', 'containerd']
+  dependencies: ['ufw', 'curl', 'gnupg', 'gnupg2', 'software-properties-common', 'containerd']
   package: ['kubelet', 'kubeadm', 'kubectl']
   pip3: []
 
-  addr: 146.59.235.71
-  cidr: 192.168.0.0/16 #10.244.0.0/16
+  cluster_nodes: ['192.168.26.158 k8s-master', '192.168.26.136 k8s-node-1']
 
   tokenFile: token

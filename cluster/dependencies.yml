@@ -1,5 +1,4 @@
 ---
-
 - hosts: all
   become: true
   become_method: sudo
@@ -9,6 +8,18 @@
     include_vars:
       file: variables.yml
       name: params
+  
+  - name: Set hostnamectl
+    shell: |
+      hostnamectl set-hostname $(cat /etc/hostname)
+  
+  - name: Declare node hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "{{ item }}"
+      create: yes
+    loop: "{{ params.cluster_nodes }}"
+    when: params.cluster_nodes is defined and params.cluster_nodes | length > 0
 
   - name: Add full path in profile
     lineinfile:
@@ -16,33 +27,63 @@
       line: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
       create: yes
 
+  - block:
+    - name: Permanantly disabling SWAP
+      shell: |
+        swapoff -a
+    - replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+  
+  - name: Update containerd conf
+    blockinfile:
+      path: /etc/modules-load.d/containerd.conf
+      create: true
+      block: |
+        overlay
+        br_netfilter
+  
+  - block:
+    - name: Load modprobe modules
+      modprobe:
+        name: overlay
+        state: present
+    - modprobe:
+        name: br_netfilter
+        state: present
+
+  - name: Update kubernetes conf
+    blockinfile:
+      path: /etc/sysctl.d/99-kubernetes-k8s.conf
+      create: true
+      block: |
+        net.bridge.bridge-nf-call-iptables = 1
+        net.ipv4.ip_forward = 1
+        net.bridge.bridge-nf-call-ip6tables = 1
+  
+  - name: Reload sysctl
+    shell: |
+      sysctl --system
+
   - name: Install the dependencies
     apt:
       name: "{{ params.dependencies }}"
       state: present
+      update_cache: yes
     when: params.dependencies is defined and params.dependencies | length > 0
 
   - block:
     - name: Open needed ports
       community.general.ufw:
         rule: allow
-        port: '179'
-        proto: tcp
-    - community.general.ufw:
-        rule: allow
-        port: '2379'
-        proto: tcp
-    - community.general.ufw:
-        rule: allow
-        port: '4789'
-        proto: tcp
-    - community.general.ufw:
-        rule: allow
-        port: '4789'
-        proto: udp
-    - community.general.ufw:
-        rule: allow
         name: OpenSSH
+    # - community.general.ufw:
+    #     rule: allow
+    #     name: http
+    # - community.general.ufw:
+    #     rule: allow
+    #     name: https
 
   - block:
     - name: Install kubernetes repository
@@ -56,28 +97,19 @@
     - apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
         state: present
-        filename: kubernetes.list
-
-  - name: Upgrade packages manager
-    apt:
-      name: '*'
-      state: latest
-      update_cache: yes
+        filename: kubernetes
 
   - name: Install packages
     apt:
       name: "{{ params.package }}"
       state: present
+      update_cache: yes
     when: params.package is defined and params.package | length > 0
 
-  - block:
-    - name: Permanantly disabling SWAP
-      shell: |
-        swapoff -a
-    - replace:
-        path: /etc/fstab
-        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-        replace: '# \1'
+  - name: Hold k8s packages
+    shell: |
+      apt-mark hold "{{ params.package }}"
+    when: params.package is defined and params.package | length > 0
 
   - block:
     - name: Configuring containerd
@@ -85,12 +117,13 @@
         containerd config default | tee /etc/containerd/config.toml >/dev/null 2>&1
     - lineinfile:
         path: /etc/containerd/config.toml
-        search_string: 'systemd_cgroup = false'
-        line: '    systemd_cgroup = true'
+        search_string: 'SystemdCgroup = false'
+        line: '            SystemdCgroup = true'
 
   - block:
     - name: Restarting containerd
       systemd:
         name: containerd
-        state: started
+        state: restarted
+        daemon_reload: true
         enabled: yes

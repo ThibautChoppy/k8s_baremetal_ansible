@@ -1,7 +1,7 @@
 ---
   - import_playbook: ./cluster/dependencies.yml
-  # - import_playbook: ./cluster/master.yml
-  # - import_playbook: ./cluster/worker.yml
+  - import_playbook: ./cluster/master.yml
+  - import_playbook: ./cluster/worker.yml
 
 #  - import_playbook: dockerRegistry/docker_registry.yaml
 #  - import_playbook: helm/helm.yaml

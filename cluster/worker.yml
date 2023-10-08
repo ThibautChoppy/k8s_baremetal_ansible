@@ -1,0 +1,29 @@
+---
+- hosts: Nodes
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Including vars
+    include_vars:
+      file: variables.yml
+      name: params
+  
+  - block:
+    - name: Open needed ports
+      community.general.ufw:
+        rule: allow
+        port: '10250'
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: 30000:32767
+        proto: tcp
+
+  - name: Copying token to nodes
+    copy: src={{ params.tokenFile }} dest=token
+
+  - name: Joining kubernetes master
+    shell: |
+      cat token | tail -2 > out.sh
+      sh out.sh

@@ -1,0 +1,62 @@
+---
+- hosts: Master
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Including vars
+    include_vars:
+      file: variables.yml
+      name: params
+
+  - name: Install pip3 dependencies
+    pip:
+      name: "{{ params.pip3 }}"
+      state: present
+    when: params.pip3 is defined and params.pip3 | length > 0
+  
+  - block:
+    - name: Open needed master ports
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: 2379:2380
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: 10250:10252
+        proto: tcp
+    - community.general.ufw:
+        rule: allow
+        port: '10255'
+        proto: tcp
+
+  # - name: Init kubeadm
+  #   shell: |
+  #     iptables -P FORWARD ACCEPT
+  #     kubeadm config images pull
+
+  - name: Initializing Kubernetes cluster
+    shell: |
+      kubeadm init --control-plane-endpoint=k8s-master
+    register: output
+
+  - name: Generating token
+    local_action: copy content={{ output.stdout }} dest={{ params.tokenFile }}
+    become: False
+
+  - name: Copying kubeadm conf file
+    shell: |
+      mkdir -p $HOME/.kube
+      cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      chown $(id -u):$(id -g) $HOME/.kube/config
+    environment:
+      KUBECONFIG: /root/.kube/config
+
+  - name: Installing Calico network add-on
+    shell: |
+      curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml -O
+      kubectl apply -f calico.yaml
