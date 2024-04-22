@@ -6,7 +6,7 @@
   tasks:
   - name: Including vars
     include_vars:
-      file: variables.yml
+      file: ../variables.yml
       name: params
 
   - name: Install pip3 dependencies
@@ -34,14 +34,13 @@
         port: '10255'
         proto: tcp
 
-  # - name: Init kubeadm
-  #   shell: |
-  #     iptables -P FORWARD ACCEPT
-  #     kubeadm config images pull
-
   - name: Initializing Kubernetes cluster
     shell: |
-      kubeadm init --control-plane-endpoint=k8s-master
+      {% if params.clusterUrl is defined and params.clusterUrl != '' %}
+      kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }} --apiserver-cert-extra-sans {{ params.clusterUrl }}
+      {% else %}
+      kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }}
+      {% endif %}
     register: output
 
   - name: Generating token
@@ -55,6 +54,12 @@
       chown $(id -u):$(id -g) $HOME/.kube/config
     environment:
       KUBECONFIG: /root/.kube/config
+  
+  - name: Edit kube-proxy config
+    shell: |
+      kubectl get configmap kube-proxy -n kube-system -o yaml | \
+      sed -e "s/strictARP: false/strictARP: true/" | \
+      kubectl apply -f - -n kube-system
 
   - name: Installing Calico network add-on
     shell: |

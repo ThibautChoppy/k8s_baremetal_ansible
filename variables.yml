@@ -1,0 +1,12 @@
+---
+dependencies: ['ufw', 'curl', 'gnupg', 'gnupg2', 'software-properties-common', 'containerd']
+package: ['kubelet', 'kubeadm', 'kubectl']
+pip3: []
+
+tokenFile: token
+
+clusterUrl:
+
+controlPlaneEndpoint:
+
+cluster_nodes:

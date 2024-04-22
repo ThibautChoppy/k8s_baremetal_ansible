@@ -1,8 +1,0 @@
----
-  dependencies: ['ufw', 'curl', 'gnupg', 'gnupg2', 'software-properties-common', 'containerd']
-  package: ['kubelet', 'kubeadm', 'kubectl']
-  pip3: []
-
-  cluster_nodes: ['192.168.26.158 k8s-master', '192.168.26.136 k8s-node-1']
-
-  tokenFile: token

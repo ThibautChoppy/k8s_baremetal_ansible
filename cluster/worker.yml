@@ -6,7 +6,7 @@
   tasks:
   - name: Including vars
     include_vars:
-      file: variables.yml
+      file: ../variables.yml
       name: params
   
   - block:

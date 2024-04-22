@@ -1,45 +1,30 @@
-# Ansible Playbook DevOps Infrastructure `[v1.2 - Stable]`
+# Ansible Playbook DevOps Infrastructure `[v1.3 - Stable]`
 
 This Ansible Playbook deploys a kubernetes cluster
 
-### Prerequisites
+## Prerequisites
 
 To run this project, you must install Ansible on your computer and have at least 2 GNU/Debian 12.2.0 servers running.
 #### Warning: Kubernetes needs at least 2 cores and 2 GB of RAM to run.
 
-Dev Env :
+Home Lab :
 ```
-- Proxmox Server (12 Core - 32 Gb RAM)
+- Proxmox Server (64 Core - 128 Gb RAM)
     - Master
         - Node_1
         - Node_2
 ```
 
+## Installing
+
+### Dependencies
 ```
 python3 -m pip install --user ansible
 ```
 
-Ansible work by SSH, so it's mandatory to have an ssh key configured and added in authorized_keys file of target hosts.
+Ansible work by SSH, so it's mandatory to have an ssh key configured and added in root authorized_keys file of target hosts.
 
-### Installing
-
-#### On your computer
-
-First, you must edit the `hosts.ini` file with the IPs of your servers.
-```
-[Master]
-master ansible_host=xxx.xxx.xxx.xxx
-
-[Nodes]
-node-1 ansible_host=xxx.xxx.xxx.xxx
-```
-
-Then, you need to edit the `cluster/variables.yml` file with the IPs and hostname of your servers.
-```
-cluster_nodes: ['xxx.xxx.xxx.xxx k8s-master', 'xxx.xxx.xxx.xxx k8s-node-1']
-```
-
-Finally, transfer your user's ssh key to all servers :
+You can transfer your user's ssh key to all servers by running:
 ```
 cat ~/.ssh/id_rsa.pub | ssh user@remote_host "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ssh user@remote_host
@@ -47,34 +32,46 @@ su
 cp -r .ssh /root/.ssh
 ```
 
-## Running the tests
+### Running make
 
-Once the environment is set up, you can perform this test to see if all servers are seen by your computer:
+Once the environment is set up, simply run `make`.\
+Every informations will be asked by a prompt and a ping test is perform to check the configuration:
 ```
-root@computer:~# ansible all -m ping -u root
-master | SUCCESS => {
+user@computer:~# make
+ ┏━ Master ━━━━━━━━━━━━━━━━━━━━━┓
+ ┃ How many Master do you need? ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+1
+Master 1 IP address:
+[...]
+ ┏━ Setup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ ┃ Please, check the configuration. Continue? [y/N] ┃
+ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+y
+k8s-node-1 | SUCCESS => {
     "changed": false,
     "ping": "pong"
 }
-node-1 | SUCCESS => {
+k8s-master | SUCCESS => {
     "changed": false,
     "ping": "pong"
 }
-```
-If the ping failed, check if your ssh keys are in the authorized_keys file of the root user of the unreached server.
 
-## Deployment
+PLAY [all] ******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************
 
-To execute the main.yml playbook, run the command :
-```
-ansible-playbook -u root main.yml
-```
+TASK [Gathering Facts] ******************************************************************************************************************************************************************************************************************************************************************************************************************************************************
+ok: [k8s-node]
+ok: [k8s-master]
 
-> If you want all the outputs of each executed command, add the `-v` option
+TASK [Including vars] *******************************************************************************************************************************************************************************************************************************************************************************************************************************************************
+ok: [k8s-master]
+ok: [k8s-node-1]
+[...]
+```
 
 #### Your (small) infrastructure is now configured !
 
-### Here are some examples of my environment to guide you :
+Here are some examples of my environment to guide you :
 ```
 root@master:~# kubectl get nodes
 NAME         STATUS   ROLES           AGE     VERSION
@@ -132,11 +129,13 @@ With all this information, I can deduce that jenkin is accessible with a browser
 
 ## Built With
 
-* [Proxmox](https://www.proxmox.com/en/) - Used to create the servers (Level 1 hypervisor)
-* [Ansible](https://docs.ansible.com/ansible/latest/index.html) - Used to deploy the servers
-* [Docker](https://www.docker.com/) - Used to create containers, needed for kubernetes
-* [Kubernetes](https://kubernetes.io/) - Used to deploy every services of the infrastructure
-* [Jenkins](https://kubernetes.io/) - Used to run the Dev test
+| Package                                                       | Usage                                             | Version |
+| :------------------------------------------------------------ | :------------------------------------------------ | :------ |
+| [Proxmox](https://www.proxmox.com/en/)                        | Level 1 hypervisor                                | 8.1.10  |
+| [Debian](https://www.debian.org/index.fr.html)                | Servers operating system                          | 12.5.0  |
+| [Ansible](https://docs.ansible.com/ansible/latest/index.html) | Automation tool for servers configuration         | 2.16.6  |
+| [Kubernetes](https://kubernetes.io/)                          | Docker container orchestrator                     | v1.28.9 |
+| [Calico](https://docs.tigera.io/calico/3.26/about/)           | Fine grained network configuration in the cluster | v3.26.1 |
 
 ## Authors
 
