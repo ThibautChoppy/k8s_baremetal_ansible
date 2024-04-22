@@ -15,7 +15,7 @@ Home Lab :
         - Node_2
 ```
 
-## Installing
+## Get Started
 
 ### Dependencies
 ```
