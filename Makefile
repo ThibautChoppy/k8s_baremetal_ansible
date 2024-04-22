@@ -22,8 +22,8 @@ COLOR 		:= 7
 	@echo "" >> hosts.ini
 	@echo "[${GROUP}]" >> hosts.ini
 	@for ((i=1; i<=${COUNT}; i++)) do \
-    	read -p "${GROUP} $$i IP address: " ip_address;\
-    	read -p "${GROUP} $$i name: " node_name;\
+		read -p "${GROUP} $$i IP address: " ip_address;\
+		read -p "${GROUP} $$i name: " node_name;\
 		if [ "${GROUP}" = "Master" ] && [ $$i -eq 1 ]; then\
 			if ($(MAKE) -s .ask-confirmation TEXT="Do you want to externally access your cluster?" BOXNAME="${GROUP}" COLOR="5"); then
 				read -p "${GROUP} $$i URL: " master_url;\
@@ -31,8 +31,8 @@ COLOR 		:= 7
 			fi;\
 			sed -i "s/controlPlaneEndpoint:/controlPlaneEndpoint: $${node_name}/" variables.yml;\
 		fi;\
-	    echo "$$node_name ansible_host=root@$$ip_address" >> hosts.ini;\
-	    echo "  - '$$ip_address $$node_name'" >> variables.yml;\
+		echo "$$node_name ansible_host=root@$$ip_address" >> hosts.ini;\
+		echo "  - '$$ip_address $$node_name'" >> variables.yml;\
 		if [ ${COUNT} -gt 1 ] && [ $$i -lt ${COUNT} ]; then echo "--------------------"; fi;\
 	done
 
