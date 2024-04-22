@@ -7,7 +7,7 @@ BOXNAME		:=
 COLOR 		:= 7
 
 .PHONY: .show-text
-.show-text: BOXSCRIPT := ./printBoxScript.sh
+.show-text: BOXSCRIPT := ./.github/printBoxScript.sh
 .show-text:
 	@$(BOXSCRIPT) "${BOXNAME}" "${TEXT}" "${COLOR}"
 
