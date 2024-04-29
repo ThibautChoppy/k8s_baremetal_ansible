@@ -25,9 +25,22 @@ COLOR 		:= 7
 		read -p "${GROUP} $$i IP address: " ip_address;\
 		read -p "${GROUP} $$i name: " node_name;\
 		if [ "${GROUP}" = "Master" ] && [ $$i -eq 1 ]; then\
-			if ($(MAKE) -s .ask-confirmation TEXT="Do you want to externally access your cluster?" BOXNAME="${GROUP}" COLOR="5"); then
+			if ($(MAKE) -s .ask-confirmation TEXT="Do you want to externally access your cluster?" BOXNAME="${GROUP}" COLOR="5"); then\
 				read -p "${GROUP} $$i URL: " master_url;\
-				sed -i "s/clusterUrl:/clusterUrl: $${master_url}/" variables.yml;\
+				sed -i "s/certExtraSans:/certExtraSans: $${master_url}/" variables.yml;\
+			fi;\
+			if ($(MAKE) -s .ask-confirmation TEXT="Do you want to install Calico?" BOXNAME="${GROUP}" COLOR="5"); then\
+				sed -i "s/calicoEnabled: false/calicoEnabled: true/" variables.yml;\
+				sed -i "s^podNetworkCidr:^podNetworkCidr: 192.168.0.0/16^" variables.yml;\
+			fi;\
+			if (cat variables.yml | grep "calicoEnabled: true"); then\
+				if ($(MAKE) -s .ask-confirmation TEXT="Default CIDR is '192.168.0.0/16', wanna change it?" BOXNAME="${GROUP}" COLOR="5"); then\
+					read -p "${GROUP} $$i CIDR: " master_cidr;\
+					sed -i "s^podNetworkCidr: 192.168.0.0/16^podNetworkCidr: $${master_cidr}^" variables.yml;\
+				fi;\
+			elif ($(MAKE) -s .ask-confirmation TEXT="Do you want a custom CIDR?" BOXNAME="${GROUP}" COLOR="5"); then\
+				read -p "${GROUP} $$i CIDR: " master_cidr;\
+				sed -i "s^podNetworkCidr:^podNetworkCidr: $${master_cidr}^" variables.yml;\
 			fi;\
 			sed -i "s/controlPlaneEndpoint:/controlPlaneEndpoint: $${node_name}/" variables.yml;\
 		fi;\
@@ -51,5 +64,5 @@ all:
 	@if ($(MAKE) -s .ask-confirmation TEXT="Please, check the configuration. Continue?" BOXNAME="Setup" COLOR="3"); then\
 		if ! ( ansible all -m ping -u root );		then $(MAKE) -s .show-text TEXT="Ping error. Check the root user ssh configuration of your instances!" BOXNAME="Setup" COLOR=1 && exit 1; fi;\
 		if ! ( ansible-playbook -u root main.yml);	then $(MAKE) -s .show-text TEXT="Error during playbook execution." BOXNAME="Setup" COLOR=1 && exit 1; fi;\
+		$(MAKE) -s .show-text TEXT="Kubernetes cluster successfully configured!" BOXNAME="Setup" COLOR=2;\
 	fi
-	@$(MAKE) -s .show-text TEXT="Kubernetes cluster successfully configured!" BOXNAME="Setup" COLOR=2

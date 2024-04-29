@@ -1,4 +1,4 @@
-# Ansible Playbook DevOps Infrastructure `[v1.3 - Stable]`
+# Ansible Playbook DevOps Infrastructure `[v1.4 - Stable]`
 
 This Ansible Playbook deploys a kubernetes cluster
 
@@ -134,8 +134,8 @@ With all this information, I can deduce that jenkin is accessible with a browser
 | [Proxmox](https://www.proxmox.com/en/)                        | Level 1 hypervisor                                | 8.1.10  |
 | [Debian](https://www.debian.org/index.fr.html)                | Servers operating system                          | 12.5.0  |
 | [Ansible](https://docs.ansible.com/ansible/latest/index.html) | Automation tool for servers configuration         | 2.16.6  |
-| [Kubernetes](https://kubernetes.io/)                          | Docker container orchestrator                     | v1.28.9 |
-| [Calico](https://docs.tigera.io/calico/3.26/about/)           | Fine grained network configuration in the cluster | v3.26.1 |
+| [Kubernetes](https://kubernetes.io/)                          | Docker container orchestrator                     | 1.28.9  |
+| [Calico](https://docs.tigera.io/calico/3.26/about/)           | Fine grained network configuration in the cluster | 3.27.3  |
 
 ## Authors
 

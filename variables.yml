@@ -5,7 +5,10 @@ pip3: []
 
 tokenFile: token
 
-clusterUrl:
+certExtraSans:
+
+calicoEnabled: false
+podNetworkCidr:
 
 controlPlaneEndpoint:
 

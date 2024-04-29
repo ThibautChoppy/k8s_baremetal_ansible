@@ -36,10 +36,14 @@
 
   - name: Initializing Kubernetes cluster
     shell: |
-      {% if params.clusterUrl is defined and params.clusterUrl != '' %}
-      kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }} --apiserver-cert-extra-sans {{ params.clusterUrl }}
+      {% if params.certExtraSans is defined and params.certExtraSans != '' %}
+        {% if params.podNetworkCidr is defined and params.podNetworkCidr != '' %}
+          kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }} --apiserver-cert-extra-sans {{ params.certExtraSans }} --pod-network-cidr={{ params.podNetworkCidr }}
+        {% else %}
+          kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }} --apiserver-cert-extra-sans {{ params.certExtraSans }}
+        {% endif %}
       {% else %}
-      kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }}
+        kubeadm init --control-plane-endpoint={{ params.controlPlaneEndpoint }}
       {% endif %}
     register: output
 
@@ -63,5 +67,9 @@
 
   - name: Installing Calico network add-on
     shell: |
-      curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml -O
+      curl https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml -O
+      {% if params.podNetworkCidr is defined and params.podNetworkCidr != '' %}
+        sed -i 's/^            # - name: CALICO_IPV4POOL_CIDR$/            - name: CALICO_IPV4POOL_CIDR\n              value: "{{ params.podNetworkCidr }}"/' calico.yaml
+      {% endif %}
       kubectl apply -f calico.yaml
+    when: params.calicoEnabled == true
